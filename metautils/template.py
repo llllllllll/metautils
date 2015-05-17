@@ -63,20 +63,15 @@ class _TemplateMeta(type):
 
         class Template(TemplateBase):
             """
-            A callable that takes a base metaclass and returns a new metaclass
-            that is a composition of this metaclass template and a base
-            metaclass.
+            Constructs a new class that is the composition of this
+            class template and a base class.
+
+            If `adjust_name` is truthy, the name of the base class will be
+            prepended with the name of the new class.
             """
             __slots__ = ()
 
             def __call__(self, base=type, adjust_name=True):
-                """
-                Constructs a new metaclass that is the composition of this
-                metaclass template and a base metaclass.
-
-                If `adjust_name` is truthy, the name of the base class will be
-                prepended with the name of the new class.
-                """
                 dict_cpy = dict_.copy()  # We could potentially mutate this.
                 inner_bases = (base,) + bases
 
