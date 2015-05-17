@@ -16,6 +16,7 @@ from unittest import TestCase
 
 
 from metautils import T, templated
+from metautils.template import TemplateBase
 from metautils.box import box
 
 
@@ -26,7 +27,7 @@ class TestMeta(type):
     pass
 
 
-class Py3TestCase(TestCase):
+class TemplateTestCase(TestCase):
     def test_applies_decorators(self):
         test_decorator_called = 0
 
@@ -123,3 +124,58 @@ class Py3TestCase(TestCase):
 
         self.assertIs(D.__base__, TestMeta)
         self.assertIs(D.__bases__[1], tsfmmarker)
+
+    def test_T_name_resolution(self):
+        """
+        Tests that the `T` name resolves to the template base.
+        """
+        class C(T):
+            @templated
+            def method(self):
+                return T
+
+        self.assertIs(C(tuple)().method(), tuple)
+
+    def test_super(self):
+        """
+        Tests that `super` resolves correctly.
+        """
+        value = object()
+
+        class C(object):
+            def method(self):
+                return value
+
+        class D(T):
+            @templated
+            def method(self):
+                return super().method()
+
+        self.assertIs(D(C)().method(), value)
+
+    def test_class_resolution(self):
+        """
+        Tests the `__class__` implicit closure value is correctly set.
+        """
+        class C(object):
+            pass
+
+        class D(T):
+            @templated
+            def assertions(self_):
+                # Make sure `__class__` resolves correctly
+                self.assertIs(__class__, D)  # noqa
+                self.assertIsInstance(self_, D)
+                self.assertIn(D, C.__subclasses__())
+
+                # Make sure the `D` here does not refer to the template.
+                self.assertNotIsInstance(D, TemplateBase)
+
+            @templated
+            def get_D(self_):
+                # Make sure that `D` resolves correctly inside a method.
+                return D
+
+        d = D(C)()
+        d.assertions()
+        self.assertIsNot(d.get_D(), D)

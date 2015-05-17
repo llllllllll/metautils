@@ -13,12 +13,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import lru_cache
+from ctypes import c_int, py_object, pythonapi
 from textwrap import dedent
 
 from codetransformer.transformers import asconstants
 
 from metautils.box import methodbox
 from metautils.functional import compose
+
+# Mutates the value of a `cell` object. These are the objects
+# that wrap the values found in the `__closure__` of a function.
+cell_set = pythonapi.PyCell_Set
+cell_set.argtypes = (py_object, py_object)
+cell_set.restype = c_int
+
+_cell_sentinel = object()
+
+
+def _getcontents(closure):
+    for cell in closure or ():
+        yield cell.cell_contents
 
 
 class TemplateBase(object):
@@ -73,19 +87,44 @@ class _TemplateMeta(type):
 
                 inner_base = inner_bases[0]
                 transformer = asconstants(**{argname: inner_base})
-
+                class_closure_cells = []
                 for k, v in dict_cpy.items():
                     if isinstance(v, templated):
                         # We need to change lookups to `argname`
                         # to resolve to the inner_base.
-                        dict_cpy[k] = transformer(v.unboxed)
+                        unboxed = v.unboxed
+                        dict_cpy[k] = func = transformer(
+                            v.unboxed,
+                            closure=(
+                                _cell_sentinel if c is self else c
+                                for c in _getcontents(unboxed.__closure__)
+                            ),
+                        )
+                        # We also need to make `__class__` (and super())
+                        # work as intended. We will swap the contents of
+                        # the cell after we create the type.
+                        # We create new cells for our new function,
+                        # if the old cell was pointing to `self`, then
+                        # we put a `_cell_sentinel` value in the cell that
+                        # will be replaced with the newly constructed class.
+                        class_closure_cells.extend(
+                            c for c in func.__closure__ or ()
+                            if c.cell_contents is _cell_sentinel
+                        )
 
                 if adjust_name:
                     # We want to have the base's name prepended to ours.
                     name_pp = base.__name__ + name_pp
 
+                # Apply all of the decorators and create the type.
                 tp = compose(*decorators)(type(name_pp, inner_bases, dict_cpy))
                 tp.__qualname__ = name_pp
+
+                for cell in class_closure_cells:
+                    # Mutate the closures inplace to make `__class__`
+                    # resolve to the new class we just created.
+                    cell_set(cell, tp)
+
                 return tp
 
             if cachesize is None or cachesize >= 0:

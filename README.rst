@@ -38,6 +38,28 @@ as:
         @templated
         def __new__(mcls, name, bases, dict_):
             dict_ = {k.lower(): v for k, v in dict_.items()}
+            return super().__new__(mcls, name, bases, dict_)
+
+
+    class MethodCatcher(T):
+        @templated
+        def __new__(mcls, name, bases, dict_):
+            dict_['methods'] = [v for v in dict_.values() if callable(v)];
+            return super().__new__(mcls, name, bases, dict_)
+
+
+Python 2 style super calls will also work, like: ``super(AllLower, mcls)```
+We can write the above classes without using super by delagating to ``T``
+just like we would delegate to a concrete class, for example:
+
+.. code:: python
+
+   from metautils import T, templated
+
+    class AllLower(T):
+        @templated
+        def __new__(mcls, name, bases, dict_):
+            dict_ = {k.lower(): v for k, v in dict_.items()}
             return T.__new__(mcls, name, bases, dict_)
 
 
@@ -46,6 +68,13 @@ as:
         def __new__(mcls, name, bases, dict_):
             dict_['methods'] = [v for v in dict_.values() if callable(v)];
             return T.__new__(mcls, name, bases, dict_)
+
+
+Inside the context of a templated function, ``T`` with refer to the concrete
+class that was used to instantiate an instance of the template.
+Another name that will be changed out from under you is the class name
+itself. When you are in the context of a method, the class name will actually
+resolve to the concrete type.
 
 Now we can define classes that use *BOTH* of these metaclasses like so:
 
