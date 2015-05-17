@@ -12,7 +12,48 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from metautils.compat import PY3
+from unittest import TestCase
 
-if PY3:
-    from metautils.tests._test_singleton_py3 import SingletonTestCase  # NOQA
+from metautils.singleton import Singleton
+
+
+class SingletonTestCase(TestCase):
+    def test_creates_instance(self):
+        class instance(object, metaclass=Singleton()):
+            pass
+
+        self.assertNotIsInstance(instance, type)
+
+    def test_has_methods(self):
+        class instance(object, metaclass=Singleton()):
+            def method(self):
+                return 'm'
+
+        self.assertEqual(instance.method(), 'm')
+
+    def test_has_valus(self):
+        class instance(object, metaclass=Singleton()):
+            a = 'a'
+
+        self.assertEqual(instance.a, 'a')
+
+    def test_single_instance_of_type(self):
+        class instance(object, metaclass=Singleton()):
+            pass
+
+        with self.assertRaises(TypeError):
+            type(instance)()
+
+    def test_new_erasure(self):
+        called = 0
+
+        def new(cls):
+            nonlocal called
+            called += 1
+            return object.__new__(cls)
+
+        class instance(object, metaclass=Singleton()):
+            __new__ = new
+
+        self.assertEqual(called, 1)
+        self.assertIsNot(instance.__new__, new)

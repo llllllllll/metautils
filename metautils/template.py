@@ -12,12 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from functools import lru_cache
 from textwrap import dedent
 
 from codetransformer.transformers import asconstants
 
 from metautils.box import methodbox
-from metautils.compat import compose, items, lru_cache
+from metautils.functional import compose
 
 
 class TemplateBase(object):
@@ -43,21 +44,9 @@ class _TemplateMeta(type):
 
         template_param = bases[0]
         if not isinstance(template_param, _TemplateMeta):
-            raise TypeError('class template must subclass T')
+            raise TypeError('class template must subclass {}'.format(T))
 
         bases = bases[1:]
-
-        if issubclass(template_param, _TWithArgs):
-            # The arguments were passed through the template param,
-            # forward these to `__new__` to emulate python 3 class arguments.
-            return mcls.__new__(
-                mcls,
-                name,
-                (T,) + bases,  # Kill the infinite recursion.
-                dict_,
-                **template_param._kwargs
-            )
-
         preprocess = preprocess or (lambda *a: a)
         decorators = tuple(decorators)
 
@@ -85,7 +74,7 @@ class _TemplateMeta(type):
                 inner_base = inner_bases[0]
                 transformer = asconstants(**{argname: inner_base})
 
-                for k, v in items(dict_cpy):
+                for k, v in dict_cpy.items():
                     if isinstance(v, templated):
                         # We need to change lookups to `argname`
                         # to resolve to the inner_base.
@@ -96,9 +85,6 @@ class _TemplateMeta(type):
                     name_pp = base.__name__ + name_pp
 
                 tp = compose(*decorators)(type(name_pp, inner_bases, dict_cpy))
-                # This is Python 3 specific, but there is no need to make
-                # a check as this will not fail in Python 2, it is just
-                # not used.
                 tp.__qualname__ = name_pp
                 return tp
 
@@ -117,28 +103,6 @@ class _TemplateMeta(type):
         return Template()
 
 
-class _TWithArgs(object):
-    """
-    Marker to indicate that this is a template argument that is holding the
-    arguments.
-    """
-    pass
-
-
-def T_new(cls, **kwargs):
-    """
-    `__new__` for `T`. This allows us to pass argument to the metaclass
-    in Python 2.
-    """
-    # We are using `type.__new__` so that we get a concrete class, not
-    # a template.
-    return type.__new__(_TemplateMeta, 'TWithArgs', (_TWithArgs,), {
-        '__doc__': 'A template parameter with arguments applied.',
-        '__slots__': (),
-        '_kwargs': kwargs,
-    })
-
-
 # The template parameter. This uses `type.__new__` because we need a concrete
 # class here, not a template.
 T = type.__new__(_TemplateMeta, 'T', (object,), {
@@ -151,8 +115,8 @@ T = type.__new__(_TemplateMeta, 'T', (object,), {
 
         >>> class MyTemplate(T):
         ...    @templated
-        ...    def method(self, T_):
-        ...        print(T_, 'is the template argument')
+        ...    def method(self):
+        ...        print(T, 'is the template argument')
 
         To construct instances of your templated class, call the
         template with the class you want to subclass.
@@ -163,28 +127,18 @@ T = type.__new__(_TemplateMeta, 'T', (object,), {
         >>> NewClass.__mro__ = (MyBaseClass,) + MyBaseClass.__mro__
         True
 
-        The `templated` decorator will pass the templated argument to the
-        function implicitly allowing us to close over the base class.
+        The `templated` decorator will make the `T` resolve to the template
+        argument instead of the `T` object.
 
         >>> NewClass().method()
         'MyBaseClass is the template argument'
 
         Additional arguments can be passed to the template as keyword
-        arguments in the class statement, or as arguments to `T`.
+        arguments in the class statement.
 
-        >>> class Python3Style(T, decorators=(mydecorator,)):
+        >>> class C(T, decorators=(mydecorator,)):
         ...     pass
 
-        or in Python 2 without class arguments:
-
-        >>> class Python2Style(T(decorators=(mydecorator,))):
-        ...     pass
-
-        Python 2 style will work in Python 2 or 3, so it should be used
-        for cross compatible code; however, the Python 3 style looks
-        much better and should be used if no python 2 compatibility is
-        needed. In Python 3, passing arguments through the template
-        argument will override the arguments passed to the class by keyword.
 
         The arguments may include:
 
@@ -208,9 +162,15 @@ T = type.__new__(_TemplateMeta, 'T', (object,), {
 
         argname: The name of the template argument, by default: 'T'
           This name will be changed to resolve to the template base.
+          For example:
+
+          class C(T, argname='U'):
+              @templated
+              def __new__(cls):
+              print('hello')
+              return U.__new__(cls)
         """,
     ),
-    '__new__': T_new,
     '__slots__': (),
 })
 

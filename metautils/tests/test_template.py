@@ -14,23 +14,112 @@
 # limitations under the License.
 from unittest import TestCase
 
-from metautils import T
-from metautils.template import TemplateBase
-from metautils.compat import PY2
+
+from metautils import T, templated
+from metautils.box import box
 
 
-class MetaFactoryTestCase(TestCase):
-    def test_create_template(self):
-        """
-        Tests that subclassing T returns a template.
-        """
-        class template(T):
+class TestMeta(type):
+    """
+    A metaclass for testing.
+    """
+    pass
+
+
+class Py3TestCase(TestCase):
+    def test_applies_decorators(self):
+        test_decorator_called = 0
+
+        def test_decorator(cls):
+            nonlocal test_decorator_called
+            test_decorator_called += 1
+
+            self.assertIsInstance(cls, a)
+            cls = cls.unboxed
+
+            self.assertIsInstance(cls, b)
+            cls = cls.unboxed
+
+            self.assertIsInstance(cls, c)
+            cls = cls.unboxed
+
+            self.assertIsInstance(cls, type)
+            return cls
+
+        class a(box):
             pass
 
-        self.assertIsInstance(template, TemplateBase)
+        class b(box):
+            pass
 
+        class c(box):
+            pass
 
-if PY2:
-    from metautils.tests._test_template_py2 import Py2TestCase  # NOQA
-else:
-    from metautils.tests._test_template_py3 import Py3TestCase  # NOQA
+        class template(T, decorators=(test_decorator, a, b, c,)):
+            pass
+
+        class C(object, metaclass=template()):
+            pass
+
+        self.assertEqual(test_decorator_called, 1)
+
+    def test_correct_base_no_tsfm(self):
+        """
+        Tests that `__base__` is the correct object without a transform
+        function.
+        """
+        class M(T):
+            @templated
+            def __new__(mcls, name, bases, dict_):
+                return T
+
+        class C(object, metaclass=M()):
+            """
+            A class that uses the default, test that this is `type`.
+            """
+            pass
+
+        self.assertIs(C, type)
+
+        class D(object, metaclass=M(TestMeta)):
+            """
+            A use where the meta explictly subclasses.
+            """
+            pass
+        self.assertIs(D, TestMeta)
+
+    def test_correct_base_tsfm(self):
+        """
+        Tests that preprocess can change the base.
+        """
+        class tsfmmarker(object):
+            pass
+
+        def preprocess(name, bases, dict_):
+            class tsfm(bases[0], tsfmmarker):
+                pass
+
+            return name, (tsfm,) + bases[1:], dict_
+
+        class M(T, preprocess=preprocess):
+            @templated
+            def __new__(mcls, name, bases, dict_):
+                return T
+
+        class C(object, metaclass=M()):
+            """
+            A class that uses the default, test that this is `type`.
+            """
+            pass
+
+        self.assertIs(C.__base__, type)
+        self.assertIs(C.__bases__[1], tsfmmarker)
+
+        class D(object, metaclass=M(TestMeta)):
+            """
+            A use where the meta explictly subclasses.
+            """
+            pass
+
+        self.assertIs(D.__base__, TestMeta)
+        self.assertIs(D.__bases__[1], tsfmmarker)
