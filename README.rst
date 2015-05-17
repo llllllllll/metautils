@@ -48,7 +48,7 @@ as:
             return super().__new__(mcls, name, bases, dict_)
 
 
-Python 2 style super calls will also work, like: ``super(AllLower, mcls)```
+Python 2 style super calls will also work, like: ``super(AllLower, mcls)``.
 We can write the above classes without using super by delagating to ``T``
 just like we would delegate to a concrete class, for example:
 
