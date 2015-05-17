@@ -36,16 +36,16 @@ as:
 
     class AllLower(T):
         @templated
-        def __new__(mcls, name, bases, dict_, T_):
+        def __new__(mcls, name, bases, dict_):
             dict_ = {k.lower(): v for k, v in dict_.items()}
-            return T_.__new__(mcls, name, bases, dict_)
+            return T.__new__(mcls, name, bases, dict_)
 
 
     class MethodCatcher(T):
         @templated
-        def __new__(mcls, name, bases, dict_, T_):
+        def __new__(mcls, name, bases, dict_):
             dict_['methods'] = [v for v in dict_.values() if callable(v)];
-            return T_.__new__(mcls, name, bases, dict_)
+            return T.__new__(mcls, name, bases, dict_)
 
 Now we can define classes that use *BOTH* of these metaclasses like so:
 
