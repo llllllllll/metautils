@@ -35,9 +35,9 @@ class Singleton(T):
     does not support companion objects.
     """
     @templated
-    def __new__(mcls, name, bases, dict_, T_, **kwargs):
+    def __new__(mcls, name, bases, dict_, **kwargs):
         dict_['__name__'] = name
-        cls = T_.__new__(mcls, name, bases, dict_)
+        cls = T.__new__(mcls, name, bases, dict_)
         inst = cls(**kwargs)
         # Prevent another instance from being made.
         cls.__new__ = _singleton_new
