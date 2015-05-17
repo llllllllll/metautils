@@ -70,8 +70,8 @@ class Py3TestCase(TestCase):
         """
         class M(T):
             @templated
-            def __new__(mcls, name, bases, dict_, T_):
-                return T_
+            def __new__(mcls, name, bases, dict_):
+                return T
 
         class C(object, metaclass=M()):
             """
@@ -103,8 +103,8 @@ class Py3TestCase(TestCase):
 
         class M(T, preprocess=preprocess):
             @templated
-            def __new__(mcls, name, bases, dict_, T_):
-                return T_
+            def __new__(mcls, name, bases, dict_):
+                return T
 
         class C(object, metaclass=M()):
             """
