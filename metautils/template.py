@@ -12,8 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from functools import wraps
 from textwrap import dedent
+
+from codetransformer.transformers import asconstants
 
 from metautils.box import methodbox
 from metautils.compat import compose, items, lru_cache
@@ -37,7 +38,8 @@ class _TemplateMeta(type):
                 dict_,
                 preprocess=None,
                 decorators=(),
-                cachesize=None):
+                cachesize=None,
+                argname='T'):
 
         template_param = bases[0]
         if not isinstance(template_param, _TemplateMeta):
@@ -86,20 +88,13 @@ class _TemplateMeta(type):
                 )
 
                 inner_base = inner_bases[0]
+                transformer = asconstants(**{argname: inner_base})
 
                 for k, v in items(dict_cpy):
                     if isinstance(v, templated):
-                        # The method needs the base class in a closure, so we
-                        # construct one here.
-                        def close_by_value(unboxed=v.unboxed):
-                            # This is the dumbest python scoping issue.
-                            @wraps(unboxed)
-                            def wrapper(*args, **kwargs):
-                                return unboxed(*args, T_=inner_base, **kwargs)
-
-                            return wrapper
-
-                        dict_cpy[k] = close_by_value()
+                        # We need to change lookups to `argname`
+                        # to resolve to the inner_base.
+                        dict_cpy[k] = transformer(v.unboxed)
 
                 if adjust_name:
                     # We want to have the base's name prepended to ours.
@@ -215,6 +210,9 @@ T = type.__new__(_TemplateMeta, 'T', (object,), {
           that will be the `lru_cache`'s cachesize. If this is less
           than 0, no cache will be used. If this is `None`, then there
           will be no upper bounds on the cache.
+
+        argname: The name of the template argument, by default: 'T'
+          This name will be changed to resolve to the template base.
         """,
     ),
     '__new__': T_new,
@@ -224,7 +222,6 @@ T = type.__new__(_TemplateMeta, 'T', (object,), {
 
 class templated(methodbox):
     """
-    Marker to indicate that the method should be passed `T` under the
-    name: `T_`
+    Marker to indicate that the method should be passed `T`
     """
     pass

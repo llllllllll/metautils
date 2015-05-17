@@ -27,13 +27,12 @@ setup(
         'License :: OSI Approved :: Apache Software License',
         'Natural Language :: English',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python',
         'Topic :: Utilities',
     ],
     url='https://github.com/quantopian/metautils',
     install_requires=(
-        'functools32',
-    ) if version_info.major == 2 and version_info == 7 else (),
+        'codetransformer',
+    ),
 )
