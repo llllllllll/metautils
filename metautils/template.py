@@ -163,7 +163,7 @@ T = type.__new__(_TemplateMeta, 'T', (object,), {
         >>> NewClass = MyTemplate(MyBaseClass)
         >>> NewClass.__base__ == MyBaseClass
         True
-        >>> NewClass.__mro__ = (MyBaseClass,) + MyBaseClass.__mro__
+        >>> NewClass.__mro__ == (MyBaseClass,) + MyBaseClass.__mro__
         True
 
         The `templated` decorator will make the `T` resolve to the template
