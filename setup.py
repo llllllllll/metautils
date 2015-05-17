@@ -2,13 +2,14 @@
 from distutils.core import setup
 import sys
 
-long_description = ''
+if sys.version_info.major == 2:
+    raise AssertionError('metautils only works with Python 3')
 
+
+long_description = ''
 if 'upload' in sys.argv:
     with open('README.rst') as f:
         long_description = f.read()
-
-version_info = sys.version_info
 
 setup(
     name='metautils',
@@ -27,9 +28,11 @@ setup(
         'License :: OSI Approved :: Apache Software License',
         'Natural Language :: English',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3 :: Only',
+        'Programming Language :: Python :: Implementation :: CPython',
         'Programming Language :: Python',
         'Topic :: Utilities',
+        'Topic :: Software Development :: Pre-processors',
     ],
     url='https://github.com/quantopian/metautils',
     install_requires=(
