@@ -154,4 +154,4 @@ difficult to maintain. This is mainly an interesting proof of concept to push
 use the more stable version.
 
 
-.. metautils_: https://github.com/quantopian/metautils
+.. _metautils: https://github.com/quantopian/metautils
