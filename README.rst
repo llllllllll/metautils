@@ -1,10 +1,12 @@
-metautils
-=========
+metautils3
+==========
 
-Utilities for writing and composing metaclasses.
+Experimental utilities for writing and composing metaclasses.
+
+For safe and stable metaclass utilities, see metautils_
 
 Template Model
------------------------
+--------------
 
 Why do we need or want to write class templates.
 
@@ -110,7 +112,7 @@ transformers over each other.
 
 
 ``Template``
---------------------
+------------
 
 While the previous example only showed metaclasses, you can use this for any
 class; however, it is most useful for metaclasses where having a compatible
@@ -137,3 +139,19 @@ You can also use the compose function to do this:
     from metautils import compose
 
     new_class_template = compose(m, n, p, q, ..., z)
+
+
+Differences with ``metautils``
+------------------------------
+
+metautils3 uses far more experimental features, including bytecode and code
+object transformations that allow for more work to be done implicitly. This is
+how the ``T`` object can refernece the template argument inside of a method, or
+how we can get ``super`` to work as intended. This package also calls into
+``ctypes`` and other CPython specific code, making it less portable and more
+difficult to maintain. This is mainly an interesting proof of concept to push
+``metautils`` to the limits. For any production code, I have to recommend you
+use the more stable version.
+
+
+.. metautils_: https://github.com/quantopian/metautils

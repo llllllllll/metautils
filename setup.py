@@ -3,7 +3,7 @@ from distutils.core import setup
 import sys
 
 if sys.version_info.major == 2:
-    raise AssertionError('metautils only works with Python 3')
+    raise AssertionError('metautils3 only works with Python 3')
 
 
 long_description = ''
@@ -12,11 +12,11 @@ if 'upload' in sys.argv:
         long_description = f.read()
 
 setup(
-    name='metautils',
+    name='metautils3',
     version='0.1.0',
-    description='Utilities for working with metaclasses.1',
-    author='Quantopian Inc.',
-    author_email='opensource@quantopian.com',
+    description='Experimental utilities for working with metaclasses.',
+    author='Joe Jevnik',
+    author_email='joejev@gmail.com',
     packages=[
         'metautils',
     ],
@@ -34,7 +34,7 @@ setup(
         'Topic :: Utilities',
         'Topic :: Software Development :: Pre-processors',
     ],
-    url='https://github.com/quantopian/metautils',
+    url='https://github.com/llllllllll/metautils3',
     install_requires=(
         'codetransformer',
     ),
