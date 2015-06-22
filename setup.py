@@ -13,7 +13,7 @@ if 'upload' in sys.argv:
 
 setup(
     name='metautils3',
-    version='0.1.1',
+    version='0.1.2',
     description='Experimental utilities for working with metaclasses.',
     author='Joe Jevnik',
     author_email='joejev@gmail.com',
