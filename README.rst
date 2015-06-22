@@ -34,7 +34,7 @@ as:
 
 .. code:: python
 
-    from metautils import T, templated
+    from metautils3 import T, templated
 
     class AllLower(T):
         @templated
@@ -56,7 +56,7 @@ just like we would delegate to a concrete class, for example:
 
 .. code:: python
 
-   from metautils import T, templated
+   from metautils3 import T, templated
 
     class AllLower(T):
         @templated
@@ -136,7 +136,7 @@ You can also use the compose function to do this:
 
 .. code:: python
 
-    from metautils import compose
+    from metautils3 import compose
 
     new_class_template = compose(m, n, p, q, ..., z)
 
