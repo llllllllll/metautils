@@ -18,7 +18,7 @@ setup(
     author='Joe Jevnik',
     author_email='joejev@gmail.com',
     packages=[
-        'metautils',
+        'metautils3',
     ],
     long_description=long_description,
     license='Apache 2.0',
